@@ -13,9 +13,9 @@ public class Dijkstra {
     private double[] radiation;
     private int start, goal;
     private Set<Integer> closedSet;
-    private PriorityQueue<Integer> openSet;
+    private PriorityQueue<Integer> pq;
     private double[] gScore;
-    private int[] cameFrom;
+    private int[] prev;
     private int size;
 
 
@@ -26,15 +26,15 @@ public class Dijkstra {
         this.goal = goal;
         this.size = size;
         closedSet = new HashSet<>();
-        openSet = new PriorityQueue<>((o1, o2) -> {
+        pq = new PriorityQueue<>((o1, o2) -> {
             if (gScore[o1] - gScore[o2] > 0)
                 return 1;
             else if (gScore[o1] - gScore[o2] < 0)
                 return -1;
             else return 0;
         });
-        openSet.add(start);
-        cameFrom = new int[size * size];
+        pq.add(start);
+        prev = new int[size * size];
         gScore = new double[size * size];
         for (int i = 0; i < size * size; i++) {
             gScore[i] = Double.MAX_VALUE;
@@ -43,10 +43,10 @@ public class Dijkstra {
     }
 
     public void clear() {
-        openSet.clear();
+        pq.clear();
         closedSet.clear();
-        openSet.add(start);
-        cameFrom = new int[size * size];
+        pq.add(start);
+        prev = new int[size * size];
         gScore = new double[size * size];
         for (int i = 0; i < size * size; i++) {
             gScore[i] = Double.MAX_VALUE;
@@ -56,23 +56,31 @@ public class Dijkstra {
 
     public ArrayList<Integer> findRoute(double[] statistics, double alpha) {
         int i = 0;
-        while (!openSet.isEmpty()) {
-            int current = openSet.poll();
+        while (!pq.isEmpty()) {
+            int current = pq.poll();
             if (current == goal)
                 return reconstructPath(statistics);
             closedSet.add(current);
             for (int x : offsets) {
                 int neighbor = x + current;
-//                if (closedSet.contains(neighbor)  || array[current] == -1)
                 if (array[neighbor] != WHITECELL || closedSet.contains(neighbor))
                     continue;
-                double tentative_gScore = gScore[current] + radiation[neighbor] * alpha +
-                        (1 - alpha) * meanRad * chebyshevDistance(current, neighbor); //radiation[neighbor];
+                
+                //
+                /*double tentative_gScore = gScore[current] + radiation[neighbor] * alpha +
+                        (1 - alpha) * meanRad * chebyshevDistance(current, neighbor);*/ //radiation[neighbor];
+                
+                double m = 1;
+                if (x > 3) {
+                    m = Math.sqrt(2);
+                }
+                double tentative_gScore = gScore[current] + radiation[neighbor] * m;
+                
                 if (tentative_gScore >= gScore[neighbor])
                     continue;
                 gScore[neighbor] = tentative_gScore;
-                cameFrom[neighbor] = current;
-                openSet.add(neighbor);
+                prev[neighbor] = current;
+                pq.add(neighbor);
             }
         }
         return null;
@@ -86,9 +94,9 @@ public class Dijkstra {
         totalPath.add(goal);
         int current = goal;
         while (current != start) {
-            length += distance(current, cameFrom[current]);
+            length += distance(current, prev[current]);
             rad += radiation[current];
-            current = cameFrom[current];
+            current = prev[current];
             totalPath.add(current);
         }
         rad += radiation[start];

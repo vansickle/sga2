@@ -12,7 +12,8 @@ public class GraphReader {
     public static int ORANGE = -32985;
     public static int RED = -1237980;
 
-    public static int[] seeBMPImage(String BMPFileName, int[] source_target) throws IOException {
+    public static int[] seeBMPImage(
+            String BMPFileName, int[] source_target) throws IOException {
         BufferedImage image = ImageIO.read(new File(BMPFileName));
         int xx, yy;
         int size = image.getHeight() + 2;
@@ -39,10 +40,10 @@ public class GraphReader {
             }
         }
         for (int i = 0; i < size; i++) {
-            array2D[i] = -1;
-            array2D[size * i] = -1;
-            array2D[size * (i + 1) - 1] = -1;
-            array2D[size * (size - 1) + i] = -1;
+            array2D[i] = BLACKCELL;
+            array2D[size * i] = BLACKCELL;
+            array2D[size * (i + 1) - 1] = BLACKCELL;
+            array2D[size * (size - 1) + i] = BLACKCELL;
         }
         return array2D;
     }

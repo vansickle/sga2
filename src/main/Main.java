@@ -1,5 +1,7 @@
 package main;
 
+import static main.Main.ORANGECELL;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -56,10 +58,12 @@ public class Main {
             while (scanner.hasNextDouble()) {
                 radiation[i++] = scanner.nextDouble();
             }
-        } else
+        } else {
             radiation = calculateRadiation(graph, "radiation.txt");
-
-        Dijkstra dijkstra = new Dijkstra(graph, radiation, size, source_target[0], source_target[1]);
+        }
+        
+        Dijkstra dijkstra = new Dijkstra(
+                graph, radiation, size, source_target[0], source_target[1]);
         double[] stats = new double[2];
         final int MAX_PATH_LENGTH = 1250;
 
@@ -106,7 +110,7 @@ public class Main {
     }
 
     public static double[] calculateRadiation(int[] graph, String filename) throws IOException {
-        double[] radiation = GraphBuilder.build(graph, size);
+        double[] radiation = buildRadTable(graph, size);
         BufferedWriter outputWriter;
         outputWriter = new BufferedWriter(new FileWriter(filename));
         for (int i = 0; i < radiation.length; i++) {
@@ -114,6 +118,23 @@ public class Main {
         }
         outputWriter.flush();
         outputWriter.close();
+        return radiation;
+    }
+    
+    
+    
+    public static double[] buildRadTable(int[] array, int size) {
+        double[] radiation = new double[size * size];
+        for (int i = 0; i < size * size; i++) {
+            if (array[i] == ORANGECELL) {
+                for (int j = 0; j < size * size; j++) {
+                    /*radiation[j] += Math.floor(Math.pow(10, 6) 
+                            * Math.pow(Math.E, - Main.distance(i, j) / 2));*/
+                    radiation[j] += Math.floor(Math.pow(10, 5) 
+                            / Math.pow(Main.distance(i, j), 2));
+                }
+            }
+        }
         return radiation;
     }
 
