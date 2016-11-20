@@ -42,6 +42,7 @@ public class Dijkstra {
         gScore[this.start] = 0;
     }
 
+    
     public void clear() {
         pq.clear();
         closedSet.clear();
@@ -53,8 +54,18 @@ public class Dijkstra {
         }
         gScore[this.start] = 0;
     }
-
-    public ArrayList<Integer> findRoute(double[] statistics, double alpha) {
+    
+    
+    /**
+     * Founds the shortest path
+     * @param statistics
+     * @param alpha
+     * @param excluded
+     * @return
+     */
+    public ArrayList<Integer> findRoute(
+            double[] statistics, double alpha,
+            Set<Edge> excluded) {
         int i = 0;
         while (!pq.isEmpty()) {
             int current = pq.poll();
@@ -63,21 +74,22 @@ public class Dijkstra {
             closedSet.add(current);
             for (int x : offsets) {
                 int neighbor = x + current;
-                if (array[neighbor] != WHITECELL || closedSet.contains(neighbor))
+                if (excluded.contains(new Edge(current, neighbor))) {
                     continue;
-                
-                //
-                /*double tentative_gScore = gScore[current] + radiation[neighbor] * alpha +
-                        (1 - alpha) * meanRad * chebyshevDistance(current, neighbor);*/ //radiation[neighbor];
-                
+                }
+                if (array[neighbor] != WHITECELL || closedSet.contains(neighbor)) {
+                    continue;
+                }
+
                 double m = 1;
                 if (x > 3) {
                     m = Math.sqrt(2);
                 }
                 double tentative_gScore = gScore[current] + radiation[neighbor] * m;
                 
-                if (tentative_gScore >= gScore[neighbor])
+                if (tentative_gScore >= gScore[neighbor]) {
                     continue;
+                }
                 gScore[neighbor] = tentative_gScore;
                 prev[neighbor] = current;
                 pq.add(neighbor);
@@ -86,7 +98,12 @@ public class Dijkstra {
         return null;
     }
 
-
+    
+    /**
+     * Returns the path (from the end to the begining)
+     * @param statistics
+     * @return
+     */
     private ArrayList<Integer> reconstructPath(double[] statistics) {
         ArrayList<Integer> totalPath = new ArrayList<>();
         double length = 0;
@@ -103,6 +120,50 @@ public class Dijkstra {
         statistics[0] = length;
         statistics[1] = rad;
         return totalPath;
+    }
+    
+    
+    /**
+     * Edge representation
+     */
+    public static class Edge {
+        public int from;
+        public int to;
+        
+        public Edge(int f, int t) {
+            from = f;
+            to = t;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + from;
+            result = prime * result + to;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            Edge other = (Edge) obj;
+            if (from != other.from)
+                return false;
+            if (to != other.to)
+                return false;
+            return true;
+        }
+        
+        @Override
+        public String toString() {
+            return from + " -> " + to;
+        }
     }
 }
 

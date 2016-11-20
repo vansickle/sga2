@@ -1,14 +1,16 @@
 package main;
 
-import static main.Main.ORANGECELL;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.Set;
+
+import main.Dijkstra.Edge;
 
 public class Main {
     public static final int WHITECELL = 0;
@@ -37,13 +39,12 @@ public class Main {
         return h * h + w * w;
     }
 
-    public static double chebyshevDistance(int a, int b) {
-        int h = Math.abs(delinearize(a)[0] - delinearize(b)[0]),
-                w = Math.abs(delinearize(a)[1] - delinearize(b)[1]);
-        return (h + w) + (Math.sqrt(2) - 2) * Math.min(h, w);
-    }
-
-    //1287.3229432149765 1056517886 min path
+    
+/**
+ * Find the best path
+ * @param args
+ * @throws IOException
+ */
     public static void main(String[] args) throws IOException {
         int[] source_target = new int[2];
         int[] graph = GraphReader.seeBMPImage("map.png", source_target);
@@ -65,50 +66,76 @@ public class Main {
         Dijkstra dijkstra = new Dijkstra(
                 graph, radiation, size, source_target[0], source_target[1]);
         double[] stats = new double[2];
-        final int MAX_PATH_LENGTH = 1250;
+        
+        final int MAX_PATH_LENGTH = 1290;
 
-//estimates
-//        for (int i = 0; i < 100; i++) {
-//            dijkstra.clear();
-//            dijkstra.findRoute(stats, i*0.01);
-//            System.out.println(stats[0] + " " + (int) stats[1]);
-//        }
-
-        //Bisection method
-        double a = 0, b = 1, c = 0;
-        double pathLengthA = 0, pathLengthB = 0, pathLengthC;
-        double h = 1e-4;
-        dijkstra.clear();
-        dijkstra.findRoute(stats, a);
-        pathLengthA = stats[0] - MAX_PATH_LENGTH;
-        dijkstra.clear();
-        dijkstra.findRoute(stats, b);
-        pathLengthB = stats[0] - MAX_PATH_LENGTH;
-        double best = Double.MAX_VALUE;
-        double estimate = 0;
-        while (Math.abs(a - b) > h) {
-            c = (a + b) / 2;
+        // searching
+        Set<Edge> excluded = new HashSet<>();
+        ArrayList<Integer> p = new ArrayList<>();
+        ArrayList<Integer> bestPath = null;
+        int minRad = Integer.MAX_VALUE;
+        int minPath = Integer.MAX_VALUE;
+        int stopRange = 400;
+        double prPath = Double.POSITIVE_INFINITY;
+        double prRad = Double.POSITIVE_INFINITY;
+        int counter = 0;
+        
+        for (int i = 0; p != null; i++) {
+            System.out.println(i);
             dijkstra.clear();
-            dijkstra.findRoute(stats, c);
-            pathLengthC = stats[0] - MAX_PATH_LENGTH;
-            if (pathLengthA * pathLengthC < 0)
-                b = c;
-            else
-                a = c;
-            System.out.println(stats[0] + " " + stats[1] + " " + c);
-            if (Math.abs(pathLengthC) < best && pathLengthC < 0) {
-                estimate = c;
-                best = Math.abs(pathLengthC);
+            p = dijkstra.findRoute(
+                    stats, 1, excluded);
+            if (p == null) {
+                System.out.println("path is not found");
+            } else {
+                
+                for (int j = p.size() - stopRange; j > stopRange; j--) {
+                    Edge e = new Edge(p.get(j), p.get(j - 1));
+                    /*System.out.println(e);*/
+                    excluded.add(e);
+                }
+            }
+            
+            if (prPath == stats[0] && prRad == stats[1]) {
+                counter++;
+            } else {
+                counter = 0;
+            }
+            if (counter >= 10) {
+                stopRange -= 100;
+            }
+            
+            prPath = stats[0];
+            prRad = stats[1];
+            
+            if (stats[0] <= MAX_PATH_LENGTH) {
+                if (minRad > stats[1]) {
+                    minPath = (int) stats[0];
+                    minRad = (int) stats[1];
+                    bestPath = p;
+                }
+            }
+            System.out.println("Length : " + stats[0] + " Radiation : " + (int) stats[1]);
+            if (p != null) {
+                GraphWriter.writeBMPImage("visited_paths.bmp", p, "visited_paths.bmp");
             }
         }
-
-        //print pass
-        dijkstra.clear();
-        ArrayList<Integer> path = dijkstra.findRoute(stats, estimate);
-        System.out.println("Length : " + stats[0] + " Radiation : " + (int) stats[1]);
-        GraphWriter.writeBMPImage("map.png", path, "path.bmp");
+        
+        System.out.println("BEST PATH: ");
+        System.out.println("Length : " + minPath + " Radiation : " + minRad);
+        // The best -> Length : 1084 Radiation : 87890104
+        
+        int estimate = 1;
+        
+        // Draw path
+        GraphWriter.writeBMPImage("map.png", bestPath, "path.bmp");
+        
+        // Draw radiation
+        GraphWriter.writeRadiation("map.png", radiation, "radiation.bmp", graph);
     }
 
+    
+    
     public static double[] calculateRadiation(int[] graph, String filename) throws IOException {
         double[] radiation = buildRadTable(graph, size);
         BufferedWriter outputWriter;
@@ -122,7 +149,12 @@ public class Main {
     }
     
     
-    
+    /**
+     * Computes the radiation in each point (pixel)
+     * @param array
+     * @param size
+     * @return
+     */
     public static double[] buildRadTable(int[] array, int size) {
         double[] radiation = new double[size * size];
         for (int i = 0; i < size * size; i++) {

@@ -8,6 +8,9 @@ import java.io.IOException;
 
 import static main.Main.*;
 
+/**
+ * Reads the image
+ */
 public class GraphReader {
     public static int ORANGE = -32985;
     public static int RED = -1237980;
