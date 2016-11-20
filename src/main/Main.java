@@ -49,7 +49,7 @@ public class Main {
         int[] source_target = new int[2];
         int[] graph = GraphReader.seeBMPImage("map.png", source_target);
         double[] radiation;
-        //read file if exists
+        // Read the file of radiation if exists
         File f = new File("radiation.txt");
         if (f.exists() && !f.isDirectory()) {
             radiation = new double[size * size];
@@ -62,14 +62,14 @@ public class Main {
         } else {
             radiation = calculateRadiation(graph, "radiation.txt");
         }
-        
+
+        // Init
         Dijkstra dijkstra = new Dijkstra(
                 graph, radiation, size, source_target[0], source_target[1]);
         double[] stats = new double[2];
         
         final int MAX_PATH_LENGTH = 1290;
 
-        // searching
         Set<Edge> excluded = new HashSet<>();
         ArrayList<Integer> p = new ArrayList<>();
         ArrayList<Integer> bestPath = null;
@@ -80,6 +80,7 @@ public class Main {
         double prRad = Double.POSITIVE_INFINITY;
         int counter = 0;
         
+        // Search
         for (int i = 0; p != null; i++) {
             System.out.println(i);
             dijkstra.clear();
@@ -96,6 +97,7 @@ public class Main {
                 }
             }
             
+            // Not allow infinit searching, expanding restricted paths
             if (prPath == stats[0] && prRad == stats[1]) {
                 counter++;
             } else {
@@ -104,10 +106,10 @@ public class Main {
             if (counter >= 10) {
                 stopRange -= 100;
             }
-            
             prPath = stats[0];
             prRad = stats[1];
             
+            // Remember the best path
             if (stats[0] <= MAX_PATH_LENGTH) {
                 if (minRad > stats[1]) {
                     minPath = (int) stats[0];
